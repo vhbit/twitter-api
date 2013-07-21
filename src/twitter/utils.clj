@@ -1,4 +1,5 @@
-(ns twitter.utils)
+(ns twitter.utils
+  (:require [clojure.java.io :as io]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -56,3 +57,9 @@
                 (format "Cannot find file %s" file-name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn str-as-bytearray-conv [func text]
+  (-> text
+      (.getBytes)
+      (func)
+      (String.)))

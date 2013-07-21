@@ -62,14 +62,22 @@
         query (merge (:query arg-map) params)
 
         final-uri (subs-uri uri params)
+
+        oauth-creds (:oauth-creds arg-map)
         
-        oauth-map (sign-query (:oauth-creds arg-map)
+        oauth-map (sign-query oauth-creds
                               verb
                               final-uri
                               :query query)
-        
+
+        auth-header (oauth-header-string oauth-map oauth-creds)
+
+        tt (println "Auth header" auth-header)
+
         headers (merge (:headers arg-map)
-                       (if oauth-map {:Authorization (oauth-header-string oauth-map)}))
+                       (if auth-header {:Authorization auth-header}))
+
+        tt (println "Headers" headers)
 
         my-args (cond (= verb :get) (hash-map :query query :headers headers :body body)
                       (nil? body) (hash-map :headers (add-form-content-type headers) :body query)
@@ -98,7 +106,8 @@
                        (:verb request-args)
                        (:uri request-args)
                        (apply concat (:processed-args request-args)))]
- ;;   (println "request-args" request-args)
+  ;;  (println "request-args" request-args)
+  ;;  (println "Request " request)
     
     (execute-request-callbacks client request callbacks)))
 
