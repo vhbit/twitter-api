@@ -72,12 +72,8 @@
 
         auth-header (oauth-header-string oauth-map oauth-creds)
 
-        tt (println "Auth header" auth-header)
-
         headers (merge (:headers arg-map)
                        (if auth-header {:Authorization auth-header}))
-
-        tt (println "Headers" headers)
 
         my-args (cond (= verb :get) (hash-map :query query :headers headers :body body)
                       (nil? body) (hash-map :headers (add-form-content-type headers) :body query)
