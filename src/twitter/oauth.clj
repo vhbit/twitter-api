@@ -20,47 +20,47 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmulti sign-query  
+(defmulti sign-query
   (fn [credentials verb uri & {:keys [query]}]
     (type credentials)))
 
 ;; "takes oauth credentials and returns a map of the signing parameters"
 (defmethod sign-query OauthCredentials
-  [#^OauthCredentials oauth-creds verb uri & {:keys [query]}]  
-    (into (sorted-map)
-          (merge {:realm "Twitter API"}
-                 (oa/credentials (:consumer oauth-creds)
-                                 (:access-token oauth-creds)
-                                 (:access-token-secret oauth-creds)
-                                 verb
-                                 uri
-                                 query))))
-  
+  [#^OauthCredentials oauth-creds verb uri & {:keys [query]}]
+  (into (sorted-map)
+        (merge {:realm "Twitter API"}
+               (oa/credentials (:consumer oauth-creds)
+                               (:access-token oauth-creds)
+                               (:access-token-secret oauth-creds)
+                               verb
+                               uri
+                               query))))
+
 
 ;; "takes oauth credentials and returns a map of the signing parameters"
-(defmethod sign-query AppCredentials  
+(defmethod sign-query AppCredentials
   [#^AppCredentials oauth-creds verb uri & {:keys [query]}]
-    nil)
+  nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmulti oauth-header-string 
+(defmulti oauth-header-string
   (fn [signing-map oauth-creds & {:keys [url-encode?] :or {url-encode? true}}]
     (type oauth-creds)))
 
 ;; "creates the string for the oauth header's 'Authorization' value, url encoding each value"
-(defmethod oauth-header-string OauthCredentials  
+(defmethod oauth-header-string OauthCredentials
   [signing-map oauth-creds & {:keys [url-encode?] :or {url-encode? true}}]
-    (let [val-transform (if url-encode? oas/url-encode identity)
-      s (reduce (fn [s [k v]] (format "%s%s=\"%s\"," s (name k) (val-transform (str v))))
-                "OAuth "
-                signing-map)]
+  (let [val-transform (if url-encode? oas/url-encode identity)
+        s (reduce (fn [s [k v]] (format "%s%s=\"%s\"," s (name k) (val-transform (str v))))
+                  "OAuth "
+                  signing-map)]
     (.substring s 0 (dec (count s)))))
 
 ;; "creates the string for the oauth header's 'Authorization' value, url encoding each value"
 (defmethod oauth-header-string AppCredentials
   [signing-map oauth-creds & {:keys [url-encode?] :or {url-encode? true}}]
-    (str "Bearer " (:access-token oauth-creds)))
+  (str "Bearer " (:access-token oauth-creds)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -84,13 +84,13 @@
   (let [bearer-creds (str app-key ":" app-secret)
         bearer-creds-enc (utils/str-as-bytearray-conv base64/encode bearer-creds)]
     (with-open [client (http/create-client)]
-      (let [response (-> (http/POST client "https://api.twitter.com/oauth2/token" 
-                              :body "grant_type=client_credentials"
-                              :headers {:Authorization (str "Basic " bearer-creds-enc)
-                                        :Content-Type "application/x-www-form-urlencoded;charset=UTF-8"})
-                        (http/await)
-                        (http/string)
-                        (json/read-json))
+      (let [response (-> (http/POST client "https://api.twitter.com/oauth2/token"
+                                    :body "grant_type=client_credentials"
+                                    :headers {:Authorization (str "Basic " bearer-creds-enc)
+                                              :Content-Type "application/x-www-form-urlencoded;charset=UTF-8"})
+                         (http/await)
+                         (http/string)
+                         (json/read-json))
             {:keys [token_type access_token errors]} response]
         (if (= token_type "bearer")
           (->AppCredentials access_token)
